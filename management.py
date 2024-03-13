@@ -2,11 +2,23 @@ import socket
 import time
 import threading
 from typing import NoReturn
+import schedule
 
 MONITORING_SERVICES = {
     'service1': {'ip': '192.168.1.10', 'port': 65432},
     'service2': {'ip': '192.168.1.11', 'port': 65433},
+    
 }
+
+# Configuration for DNS checks
+dns_server = "8.8.8.8"  # Google's public DNS server
+dns_queries = [
+    ('google.com', 'A'),        # IPv4 Address
+    ('google.com', 'MX'),       # Mail Exchange
+    ('google.com', 'AAAA'),     # IPv6 Address
+    ('google.com', 'CNAME'),    # Canonical Name
+    ('yahoo.com', 'A'),         # IPv4 Address
+]
 
 # Class for the client that connects to the server and sends commands
 class PingControlClient:
@@ -38,7 +50,7 @@ class PingControlClient:
         """
 
         valid_actions = ["PAUSE", "RESUME", "SHUTDOWN"]
-        valid_targets = ["HTTP", "PING"]
+        valid_targets = ["HTTP", "PING", "HTTPS", "DNS"]
         while True:
             action = input("Enter action (PAUSE, RESUME, SHUTDOWN, or EXIT to quit): ").upper()
             if action == "EXIT":
@@ -57,5 +69,6 @@ class PingControlClient:
                 print(f"Invalid action. Please enter one of {', '.join(valid_actions)}, or EXIT.")
 
 if __name__ == "__main__":
-    client = PingControlClient()
-    client.start()
+    client = PingControlClient(threading.Event())
+    client_thread = threading.Thread(target=client.start)
+    client_thread.start()
